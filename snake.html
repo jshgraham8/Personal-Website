@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background-color: #111;
+        }
+        .game-over {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-over" id="gameOver">
+        <div>Game Over</div>
+        <button onclick="restartGame()">Retry</button>
+    </div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const boxSize = 20;
+        let snake = [{ x: 100, y: 100 }];
+        let direction = 'RIGHT';
+        let food = randomFoodPosition();
+        let gameRunning = true;
+
+        document.addEventListener('keydown', changeDirection);
+        const gameOverScreen = document.getElementById('gameOver');
+
+        function drawBox(color, x, y) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, boxSize, boxSize);
+        }
+
+        function randomFoodPosition() {
+            return {
+                x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
+                y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize
+            };
+        }
+
+        function changeDirection(event) {
+            const key = event.key;
+            if (key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+            if (key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+            if (key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+            if (key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+            const head = { ...snake[snake.length - 1] };
+
+            if (direction === 'UP') head.y -= boxSize;
+            if (direction === 'DOWN') head.y += boxSize;
+            if (direction === 'LEFT') head.x -= boxSize;
+            if (direction === 'RIGHT') head.x += boxSize;
+
+            // Check for collisions
+            if (
+                head.x < 0 || head.y < 0 ||
+                head.x >= canvas.width || head.y >= canvas.height ||
+                snake.some(segment => segment.x === head.x && segment.y === head.y)
+            ) {
+                gameRunning = false;
+                gameOverScreen.style.display = 'flex';
+                return;
+            }
+
+            snake.push(head);
+
+            // Check if food is eaten
+            if (head.x === food.x && head.y === food.y) {
+                food = randomFoodPosition();
+            } else {
+                snake.shift(); // Remove tail if no food eaten
+            }
+
+            drawGame();
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBox('red', food.x, food.y);
+            snake.forEach(segment => drawBox('green', segment.x, segment.y));
+        }
+
+        function restartGame() {
+            snake = [{ x: 100, y: 100 }];
+            direction = 'RIGHT';
+            food = randomFoodPosition();
+            gameRunning = true;
+            gameOverScreen.style.display = 'none';
+            drawGame();
+        }
+
+        setInterval(updateGame, 100);
+    </script>
+</body>
+</html>
